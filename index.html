@@ -426,75 +426,37 @@ async function loadData() {
   btn.disabled = true;
   btn.textContent = '⟳ Loading...';
 
-  // Fetch from Cloudflare Worker proxy
-  const WORKER_URL = 'https://mafia-game.lionbabycrypto.workers.dev';
-
   try {
+    // Fetch from GitHub raw + Binance API directly
+    const csvUrl = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/main/${TRADES_PATH}?t=${Date.now()}`;
+    const stateUrl = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/main/${STATE_PATH}?t=${Date.now()}`;
+
     const [tradesResp, stateResp, priceResp] = await Promise.all([
-      fetch(`${WORKER_URL}/api/trades`).catch(() => null),
-      fetch(`${WORKER_URL}/api/state`).catch(() => null),
-      fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT').catch(() => null)
+      fetch(csvUrl, { cache: 'no-store' }),
+      fetch(stateUrl, { cache: 'no-store' }),
+      fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT', { cache: 'no-store' })
     ]);
 
     let trades = [];
     let state = { capital: 10000, position: 0, in_position: false };
     let btcPrice = 64358;
 
-    if (tradesResp && tradesResp.ok) {
+    if (tradesResp.ok) {
       const csvText = await tradesResp.text();
       trades = parseCSV(csvText);
-    }
-
-    if (stateResp && stateResp.ok) {
-      state = await stateResp.json();
-    }
-
-    if (priceResp && priceResp.ok) {
-      const priceData = await priceResp.json();
-      btcPrice = parseFloat(priceData.price);
-    }
-
-    state.current_price = btcPrice;
-    stateData = state;
-    tradeData = trades;
-
-    if (trades.length > 0 || state) {
-      renderDashboard(state, trades);
+      console.log(`Loaded ${trades.length} trades`);
     } else {
-      // Fallback: fetch from GitHub raw directly
-      await loadFromGithub();
-    }
-  } catch (e) {
-    console.warn('Worker fetch failed, falling back to GitHub:', e);
-    await loadFromGithub();
-  }
-
-  btn.disabled = false;
-  btn.textContent = '⟳ Refresh Data';
-}
-
-async function loadFromGithub() {
-  try {
-    const [tradesResp, stateResp, priceResp] = await Promise.all([
-      fetch(`https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/main/${TRADES_PATH}`).catch(() => null),
-      fetch(`https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/main/${STATE_PATH}`).catch(() => null),
-      fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT').catch(() => null)
-    ]);
-
-    let trades = [];
-    let state = { capital: 10000, position: 0, in_position: false };
-    let btcPrice = 64358;
-
-    if (tradesResp && tradesResp.ok) {
-      const csvText = await tradesResp.text();
-      trades = parseCSV(csvText);
+      console.warn('Trades CSV fetch failed:', tradesResp.status);
     }
 
-    if (stateResp && stateResp.ok) {
+    if (stateResp.ok) {
       state = await stateResp.json();
+      console.log('State loaded:', state);
+    } else {
+      console.warn('State JSON fetch failed:', stateResp.status);
     }
 
-    if (priceResp && priceResp.ok) {
+    if (priceResp.ok) {
       const priceData = await priceResp.json();
       btcPrice = parseFloat(priceData.price);
     }
@@ -505,7 +467,6 @@ async function loadFromGithub() {
 
     if (trades.length > 0 || state) {
       renderDashboard(state, trades);
-      document.getElementById('updateTs').textContent += ' (GitHub raw fallback)';
     } else {
       document.getElementById('content').innerHTML = `
         <div class="splash">
@@ -514,14 +475,17 @@ async function loadFromGithub() {
         </div>`;
     }
   } catch (e) {
-    console.error('All data sources failed:', e);
+    console.error('Data fetch failed:', e);
     document.getElementById('content').innerHTML = `
       <div class="splash">
         <h2>Could not load data</h2>
-        <p>Make sure trades and state are pushed to GitHub. The cron job runs daily at 9am SGT.</p>
+        <p>Check that data files exist in the repo. The cron job runs daily at 9am SGT.</p>
         <p style="font-size:11px;color:#444;margin-top:10px">${e.message}</p>
       </div>`;
   }
+
+  btn.disabled = false;
+  btn.textContent = '⟳ Refresh Data';
 }
 
 // ─── Init ─────────────────────────────────────────────────────────
