@@ -1,0 +1,5 @@
+timestamp,type,price,size_btc,capital_after,pnl,reason,source
+2026-06-14T05:29:15.496249+00:00,BUY,64300.01,0.147745,10000.0,0,FORCED ENTRY - kickstart paper trading,binance_spot
+2026-06-14T05:29:15.496595+00:00,SELL,64450.01,0.147745,10012.64,12.64,FORCED EXIT - kickstart paper trading,binance_spot
+2026-06-14T05:29:32.074377+00:00,BUY,64298.01,0.14775,10000.0,0,FORCED ENTRY - kickstart paper trading,binance_spot
+2026-06-14T05:29:32.074632+00:00,SELL,64448.01,0.14775,10012.64,12.64,FORCED EXIT - kickstart paper trading,binance_spot

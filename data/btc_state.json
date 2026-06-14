@@ -1,9 +1,8 @@
 {
-  "capital": 10000.0,
+  "capital": 10012.640265305256,
   "position": 0.0,
   "entry_price": 0.0,
   "trail_stop": 0.0,
   "in_position": false,
-  "trade_count": 0,
-  "last_checked": "2026-06-14T05:25:54.450384+00:00"
+  "trade_count": 1
 }
